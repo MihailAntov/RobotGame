@@ -21,7 +21,7 @@ public class PlayerClimbingState : PlayerBaseState, IRootState
         Ctx.AudioManager.Play("roll");
         Ctx.CharacterController.enabled = false;
         //Ctx.CharacterController.enabled = false;
-        //Ctx.CharacterController.transform.position = Vector3.MoveTowards(Ctx.CharacterController.transform.position, Ctx.LedgeCoordinates + Ctx.transform.up * 0.3f, 0.1f);
+        //Ctx.CharacterController.transform.position = Vector3.MoveTowards(Ctx.CharacterController.transform.position, Ctx.CharacterController.transform.position+Ctx.transform.forward * 0.4f, 0.1f);
         Ctx.AnimationTimer = 0;
         Ctx.Brain.ActiveVirtualCamera.VirtualCameraGameObject.TryGetComponent<CinemachineCollider>(out var collider);
         if (collider)

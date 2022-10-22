@@ -18,6 +18,8 @@ public class PlayerHangingState : PlayerBaseState, IRootState
        InitializeSubState();
        Ctx.RequireNewDropPress = true;
        Ctx.Animator.SetBool("isHanging", true);
+        //Ctx.AudioManager.Stop($"{Ctx.Surface}Run");
+        //Ctx.AudioManager.Stop($"{Ctx.Surface}Walk");
        Ctx.CharacterController.enabled = false;
        //Debug.Log("Enter hanging");
        if(!Ctx.IsCurrentlyDropping)

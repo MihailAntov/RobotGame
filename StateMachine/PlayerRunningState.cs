@@ -5,56 +5,62 @@ using UnityEngine;
 public class PlayerRunningState : PlayerBaseState
 {
     public PlayerRunningState(PlayerStateMachine currentContext,
-                             PlayerStateFactory playerStateFactory) : base(currentContext, playerStateFactory){}
+                             PlayerStateFactory playerStateFactory) : base(currentContext, playerStateFactory) { }
     public override void EnterState()
     {
-        Ctx.Animator.SetBool("isWalking",true);
-        Ctx.Animator.SetBool("isRunning",true);
+        Ctx.Animator.SetBool("isWalking", true);
+        Ctx.Animator.SetBool("isRunning", true);
 
         // Ctx.footstep.pitch = 1f;
         // Ctx.footstep.volume = 1;
         // Ctx.footstep.Play();
 
-        Ctx.AudioManager.Play($"{Ctx.Surface}Run");
-        Ctx.Runsteps = Ctx.Surface;
-       
+        if(Ctx.Surface != "none")
+        {
+            Ctx.AudioManager.Play($"{Ctx.Surface}Run");
+            Ctx.Runsteps = Ctx.Surface;
+        }
+        
+
+
+
     }
     public override void UpdateState()
     {
-        
-        if(!Ctx.IsHanging && !Ctx.IsClimbing) 
+
+        if (!Ctx.IsHanging && !Ctx.IsClimbing)
         {
-            
+
             Ctx.AppliedMovementX = Ctx.CurrentMovementInput.x * Ctx.RunSpeed;
-            Ctx.AppliedMovementZ = Ctx.CurrentMovementInput.y * Ctx.RunSpeed; 
+            Ctx.AppliedMovementZ = Ctx.CurrentMovementInput.y * Ctx.RunSpeed;
         }
-       
-            
+
+
         if (Ctx.IsJumping)
         {
             Ctx.AppliedMovementX *= 1.15f;
             Ctx.AppliedMovementZ *= 1.15f;
         }
         Ctx.AppliedMovement = Quaternion.Euler(0f, Camera.main.transform.eulerAngles.y, 0f) * Ctx.AppliedMovement;
-        
-        
+
+
         //lock jump after roll
-        if(Ctx.JumpLockTimer > 5)
+        if (Ctx.JumpLockTimer > 5)
         {
             Ctx.IsJumpLocked = false;
             Ctx.JumpLockTimer = 0;
             //Debug.Log("Jump unlocked");
         }
-        
-        
 
-       //CheckSwitchStates();
+
+
+        //CheckSwitchStates();
     }
     public override void ExitState()
     {
-      //Debug.Log("Exit running");
-      //Ctx.footstep.Stop();
-      StopSteps();
+        //Debug.Log("Exit running");
+        //Ctx.footstep.Stop();
+        StopSteps();
     }
 
     public void StopSteps()
@@ -68,7 +74,7 @@ public class PlayerRunningState : PlayerBaseState
     public override void FixedUpdateState()
     {
         CheckSwitchStates();
-        if(Ctx.IsJumpLocked)
+        if (Ctx.IsJumpLocked)
         {
             Ctx.JumpLockTimer++;
         }
@@ -77,13 +83,17 @@ public class PlayerRunningState : PlayerBaseState
         if (Ctx.Surface != Ctx.Runsteps)
         {
             StopSteps();
-            Ctx.AudioManager.Play($"{Ctx.Surface}Run");
-            Ctx.Runsteps = Ctx.Surface;
+            if(Ctx.Surface != "none")
+            {
+                Ctx.AudioManager.Play($"{Ctx.Surface}Run");
+                Ctx.Runsteps = Ctx.Surface;
+            }
+            
         }
     }
     public override void InitializeSubState()
     {
-        
+
     }
     public override void CheckSwitchStates()
     {
@@ -95,7 +105,7 @@ public class PlayerRunningState : PlayerBaseState
         {
             SwitchState(Factory.Land());
         }
-        else if(Ctx.IsMovementPressed && !Ctx.IsRunPressed)
+        else if (Ctx.IsMovementPressed && !Ctx.IsRunPressed)
         {
             SwitchState(Factory.Walk());
         }

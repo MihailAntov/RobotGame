@@ -121,6 +121,8 @@ public class PlayerJumpingState : PlayerBaseState, IRootState
                             Vector3 edgePosition = new Vector3(horizontalHit.point.x, verticalHit.point.y, horizontalHit.point.z);
                             float rotationNeeded = Vector3.SignedAngle(edgeRotation, Ctx.CharacterController.transform.forward * -1f, Vector3.up);
                             Ctx.LedgeCoordinates = edgePosition;
+                            Ctx.AppliedMovement = Vector3.zero;
+                            
                             Ctx.IsHanging = true;
                             //Debug.Log(verticalHit.collider.gameObject.layer);
                             if(verticalHit.collider.gameObject.layer == 8)
@@ -129,8 +131,11 @@ public class PlayerJumpingState : PlayerBaseState, IRootState
                                 // {
                                 //     Ctx.PreviousParent = Ctx.CharacterController.transform.parent;
                                 // }
+                                
                                 Ctx.Attached = true;
                                 
+                                //???
+
                                 //Ctx.PreviousParent = Ctx.CharacterController.transform.parent;
                                 Ctx.CharacterController.transform.parent = verticalHit.transform.parent;
                             }

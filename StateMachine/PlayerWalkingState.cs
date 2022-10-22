@@ -17,9 +17,12 @@ public class PlayerWalkingState : PlayerBaseState
         //Ctx.footstep.volume = 1;
         //Ctx.footstep.Play();
 
-        
-         Ctx.AudioManager.Play($"{Ctx.Surface}Step");
-         Ctx.Footsteps = Ctx.Surface;
+        if(Ctx.Surface != "none")
+        {
+            Ctx.AudioManager.Play($"{Ctx.Surface}Step");
+            Ctx.Footsteps = Ctx.Surface;
+        }
+         
         
         
         
@@ -92,8 +95,13 @@ public class PlayerWalkingState : PlayerBaseState
         if (Ctx.Surface != Ctx.Footsteps)
         {
             StopSteps();
-            Ctx.AudioManager.Play($"{Ctx.Surface}Step");
-            Ctx.Footsteps = Ctx.Surface;
+
+            if(Ctx.Surface!= "none")
+            {
+                Ctx.AudioManager.Play($"{Ctx.Surface}Step");
+                Ctx.Footsteps = Ctx.Surface;
+            }
+            
         }
     }
     public override void InitializeSubState()

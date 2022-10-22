@@ -25,10 +25,10 @@ public class ScreenBehaviour : MonoBehaviour
         _playerInput.CharacterControls.Use.started += OnUse;
         _playerInput.PuzzleControls.Exit.started += OnExit;
         characterController = GameObject.Find("Player").GetComponent<CharacterController>();
-        
-        
-        
-        
+        mainCamera = GameObject.Find("CM normalCam").GetComponent<CinemachineVirtualCamera>();
+
+
+
         Ctx = GameObject.Find("Player").GetComponent<PlayerStateMachine>();
         try
         {
@@ -69,7 +69,7 @@ public class ScreenBehaviour : MonoBehaviour
     }
     void OnExit(InputAction.CallbackContext context)
         {
-                if(!puzzleBehaviour.controlsLocked)
+                if(!puzzleBehaviour.controlsLocked && !puzzleBehaviour.powerComingOn)
                 {
                 _isLookingAtTerminal = false;
                 mainCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>().m_XAxis.m_MaxSpeed = 120f;

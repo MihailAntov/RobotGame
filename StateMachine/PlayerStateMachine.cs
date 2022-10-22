@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Cinemachine;
-
+using UnityEngine.SceneManagement;
 public class PlayerStateMachine : MonoBehaviour
 {
 
@@ -66,6 +66,8 @@ public class PlayerStateMachine : MonoBehaviour
     public bool Attached {get {return _attached;} set {_attached = value;}}
     public Transform PreviousParent {get {return _previousParent;} set {_previousParent = value;}}
     public float Sensitivity {get {return _sensitivity;} set {_sensitivity = value;}}
+    public GameObject HeadRotationUpDown { get { return _head; } set {_head = value;}}
+    
     
 
 
@@ -124,7 +126,7 @@ public class PlayerStateMachine : MonoBehaviour
     CharacterController _characterController;
     public PlayerInput _playerInput;
     Animator _animator;
-
+    
     AudioManager audioManager;
 
     float _rotationFactorPerFrame = 6f;
@@ -135,6 +137,8 @@ public class PlayerStateMachine : MonoBehaviour
     bool _canGrabLedge = false;
     bool _letGo = false;
     bool _canMove = true;
+    GameObject _head;
+    Transform _bodyTransform;
     CinemachineBrain _brain;
     ICinemachineCamera _camera;
     [SerializeField]
@@ -165,12 +169,14 @@ public class PlayerStateMachine : MonoBehaviour
     [SerializeField]
     public AudioSource footstep;
 
+
     private void Awake()
     {
 
         //initial variables
         _playerInput = new PlayerInput();
         _animator = GetComponent<Animator>();
+        
         _characterController = GetComponent<CharacterController>();
         _normalTransposer = _normalCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
         _normalPov = _normalCamera.GetCinemachineComponent<CinemachinePOV>();
@@ -201,9 +207,11 @@ public class PlayerStateMachine : MonoBehaviour
         _playerInput.CharacterControls.Drop.started += onDrop;
         _playerInput.CharacterControls.Look.started += onLook;
         _playerInput.CharacterControls.Look.canceled += onLook;
+        _playerInput.CharacterControls.SceneSwitch.started += OnSceneSwitch;
         //_playerInput.CharacterControls.Look.canceled += onLookRelease;
         //_playerInput.CharacterControls.Drop.canceled += onDrop;
-
+        _head = GameObject.Find("HeadOfRobot");
+        _bodyTransform = GameObject.Find("Player").transform;
 
         //animation hash
         _isJumpingHash = Animator.StringToHash("isJumping");
@@ -218,10 +226,16 @@ public class PlayerStateMachine : MonoBehaviour
         _normalPov.m_HorizontalAxis.m_MaxSpeed = Sensitivity;
         _normalTransposer.m_XAxis.m_MaxSpeed = Sensitivity;
         _lookPov.m_HorizontalAxis.m_MaxSpeed = Sensitivity;
+
+        _lookPov.m_VerticalAxis.m_MaxSpeed= Sensitivity/3.0f;
+        _normalPov.m_VerticalAxis.m_MaxSpeed = Sensitivity/3.0f;
+        _crouchPov.m_VerticalAxis.m_MaxSpeed = Sensitivity/3.0f;
+
         _lookTransposer.m_XAxis.m_MaxSpeed = Sensitivity;
         _crouchPov.m_HorizontalAxis.m_MaxSpeed = Sensitivity;
         _crouchTransposer.m_XAxis.m_MaxSpeed = Sensitivity;
 
+        _sensitivity = PlayerPrefs.GetFloat("sensitivity", 1.0f);
         audioManager.Play("wakeUp");
 
     }
@@ -408,11 +422,14 @@ public class PlayerStateMachine : MonoBehaviour
     {
         if(CurrentState == States.Hang() || CurrentState == States.Climb() || CurrentState == States.Jump() || CurrentState == States.Fall())
         {
+            _surface = "none";
+            _runsteps = string.Empty;
+            _footsteps = string.Empty;
             return;
         }
         
         // public static bool Raycast(Ray ray, out RaycastHit hitInfo, float maxDistance, int layerMask);
-        Ray surfaceRay = new Ray(CharacterController.transform.position, Vector3.down);
+        Ray surfaceRay = new Ray(_bodyTransform.position + Vector3.up*1f, Vector3.down);
         if (Physics.Raycast(surfaceRay, out var hitMoving, 1.2f, layerMask))
         {   
                 // if(!_attached)
@@ -428,20 +445,27 @@ public class PlayerStateMachine : MonoBehaviour
             _attached = false;
         }
 
-
+        
+       
         if (Physics.Raycast(surfaceRay, out var hitFloor, 1.2f))
         {
+            
             if (hitFloor.collider.tag == "metal")
-                {
-                    _surface = "metal";
-                }
-                else
-                {
-                    _surface = "concrete";
-                }
+            {
+               _surface = "metal";
+
+            }
+            else 
+            {
+                _surface = "concrete";
+            }
+            
+
         }
         
         
+
+
     }
 
     void onJump(InputAction.CallbackContext context)
@@ -564,6 +588,16 @@ public class PlayerStateMachine : MonoBehaviour
         // }
 
     }
+    
+    private void OnSceneSwitch(InputAction.CallbackContext context)
+    {
+        //SceneManager.UnloadSceneAsync(1);
+        SceneManager.LoadScene(2);
+            
+        
+        
+        
+    }
 
     void SetUpJumpVariables()
     {
@@ -574,12 +608,12 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void OnEnable()
     {
-        _playerInput.CharacterControls.Enable();
+        //_playerInput.CharacterControls.Enable();
     }
 
     private void OnDisable()
     {
-        _playerInput.CharacterControls.Disable();
+        //_playerInput.CharacterControls.Disable();
     }
 
 
@@ -592,21 +626,27 @@ public class PlayerStateMachine : MonoBehaviour
             positionToLookAt.y = 0.0f;
             positionToLookAt.z = _appliedMovement.z;
             Quaternion currentRotation = transform.rotation;
+            Quaternion targetHeadRotation = Quaternion.Euler(new Vector3(357, _bodyTransform.rotation.eulerAngles.y - 90, 249));
 
-
+            _head.transform.rotation = Quaternion.Slerp(_head.transform.rotation, targetHeadRotation, (_rotationFactorPerFrame* 3.0f) * Time.fixedDeltaTime);
+            //transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, _rotationFactorPerFrame * Time.fixedDeltaTime);
             if (_isMovementPressed && positionToLookAt != Vector3.zero)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(positionToLookAt);
-                transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, _rotationFactorPerFrame * Time.fixedDeltaTime);
+                transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, (_rotationFactorPerFrame * 3.0f) * Time.fixedDeltaTime);
             }
         }
+        
         else
         {
             Quaternion currentRotation = transform.rotation;
             //Quaternion targetRotation = Quaternion.Euler(Camera.main.transform.rotation.x, 0, Camera.main.transform.rotation.z);
             Quaternion targetRotation = Quaternion.Euler(0f, Camera.main.transform.rotation.eulerAngles.y, 0f);
-            transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, _rotationFactorPerFrame * Time.fixedDeltaTime);
+            transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, _rotationFactorPerFrame * 3.0f * Time.fixedDeltaTime);
+            Quaternion defaultHeadRotation = Quaternion.Euler(new Vector3(357, _bodyTransform.rotation.eulerAngles.y - 90, 249 - (int)(1.4 * (_lookPov.m_VerticalAxis.Value))));
 
+            _head.transform.rotation = Quaternion.Slerp(_head.transform.rotation, defaultHeadRotation, _rotationFactorPerFrame*3.0f * Time.fixedDeltaTime);
+            //45 needs to be the vertical axis
         }
 
 
@@ -617,6 +657,14 @@ public class PlayerStateMachine : MonoBehaviour
     {
         _characterController.Move(_appliedMovement * Time.deltaTime);
         audioManager.Play("ambDark");
+        StartCoroutine(Fade());
+
+    }
+    IEnumerator Fade()
+    {
+        _playerInput.CharacterControls.Disable();
+        yield return new WaitForSeconds(3);
+        _playerInput.CharacterControls.Enable();
     }
 
     // Update is called once per frame
@@ -636,6 +684,8 @@ public class PlayerStateMachine : MonoBehaviour
     }
     private void FixedUpdate()
     {
+        
+        
         HandleRotation();
         if(CharacterController.enabled == true)
         {
@@ -651,8 +701,8 @@ public class PlayerStateMachine : MonoBehaviour
 
         //GUI.Box(new Rect(20, 50, 200, 25), CurrentState.ToString());
         //GUI.Box(new Rect(20, 100, 200, 25), CurrentState.CurrentSubState.ToString());
-        GUI.Box(new Rect(20, 150, 200, 25), "normalPov  :" + _normalPov.m_HorizontalAxis.m_MaxSpeed );
-        GUI.Box(new Rect(20, 200, 200, 25), "normalOrbiter :" + _normalTransposer.m_XAxis.m_MaxSpeed );
+        GUI.Box(new Rect(20, 150, 200, 25), "surface  :" + _surface);
+        GUI.Box(new Rect(20, 200, 200, 25), "footsteps :" + _footsteps);
         //GUI.Box(new Rect(20, 250, 200, 25), "attached :" + _attached);
         //GUI.Box(new Rect(20, 200, 200, 25), "groundCheck :" + (CurrentState == _states.Grounded()));
         //GUI.Box(new Rect(20, 250, 200, 25), "isStrafing :" + Animator.GetBool("isStrafing"));
