@@ -13,6 +13,7 @@ public class PlayerLandingState : PlayerBaseState
         landCounter = 0;
         //Debug.Log("Landing enter");
         Ctx.Animator.SetBool("isLanding", true);
+        StopSteps();
         Ctx.AudioManager.Play("land");
         
     }
@@ -54,6 +55,15 @@ public class PlayerLandingState : PlayerBaseState
     public override void InitializeSubState()
     {
         
+    }
+
+    public void StopSteps()
+    {
+        foreach (string surface in Ctx.Surfaces)
+        {
+            Ctx.AudioManager.Stop($"{surface}Step");
+            Ctx.AudioManager.Stop($"{surface}Run");
+        }
     }
 
 }

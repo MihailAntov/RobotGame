@@ -21,13 +21,11 @@ public class PlayerStateMachine : MonoBehaviour
     public float InitialJumpVelocity { get { return _initialJumpVelocity; } }
     public float AppliedMovementY { get { return _appliedMovement.y; } set { _appliedMovement.y = value; } }
     public CharacterController CharacterController { get { return _characterController; } }
-    public float Gravity { get { return _gravity; } }
+    public float Gravity { get { return _gravity; } set { _gravity = value; } }
+    public float DefaultGravity { get { return _defaultGravity; } }
     public bool IsRunPressed { get { return _isRunPressed; } }
     public bool IsMovementPressed { get { return _isMovementPressed; } set { _isMovementPressed = value; } }
-    public bool IsStrafeRightPressed { get { return _isStrafeRightPressed; } }
-    public bool IsStrafeLeftPressed { get { return _isStrafeLeftPressed; } }
-    public bool IsWalkBackPressed { get { return _isWalkBackPressed; } }
-    public bool IsStrafing { get { return _isStrafing; } }
+    
     public float AppliedMovementX { get { return _appliedMovement.x; } set { _appliedMovement.x = value; } }
     public float AppliedMovementZ { get { return _appliedMovement.z; } set { _appliedMovement.z = value; } }
     public Vector3 AppliedMovement { get { return _appliedMovement; } set { _appliedMovement = value; } }
@@ -68,8 +66,8 @@ public class PlayerStateMachine : MonoBehaviour
     public float Sensitivity {get {return _sensitivity;} set {_sensitivity = value;}}
     public GameObject HeadRotationUpDown { get { return _head; } set {_head = value;}}
     
-    
-
+    public bool LedgeBelow { get { return _ledgeBelow; } set { _ledgeBelow = value; } }
+    bool _ledgeBelow = false;
 
     //variables
     PlayerBaseState _currentState;
@@ -83,16 +81,13 @@ public class PlayerStateMachine : MonoBehaviour
     float _ledgeRotation;
     float _sensitivity;
     string _surface;
-    string [] _surfaces = new string[] {"concrete","metal"};
+    readonly string[] _surfaces = new string[] {"concrete","metal"};
     string _footsteps;
     string _runsteps;
 
     bool _isHanging;
     bool _isMovementPressed;
-    bool _isStrafeRightPressed;
-    bool _isStrafeLeftPressed;
-    bool _isWalkBackPressed;
-    bool _isStrafing;
+    
     bool _isRunPressed;
     bool _isCrouching;
     bool _isClimbing;
@@ -104,8 +99,8 @@ public class PlayerStateMachine : MonoBehaviour
     bool _inLookState;
     bool _isCurrentlyDropping;
     bool _isUsingTerminal = false;
-    float _walkSpeed = 4f;
-    float _runSpeed = 9f;
+    readonly float _walkSpeed = 4f;
+    readonly float _runSpeed = 9f;
     int _animationTimer;
     //float _runMultiplier = 1.5f;
 
@@ -113,14 +108,15 @@ public class PlayerStateMachine : MonoBehaviour
     bool _isJumpPressed = false;
     bool _isJumpLocked = false;
     float _initialJumpVelocity;
-    float _maxJumpHeight = 2f;
-    float _maxJumpTime = 0.75f;
+    readonly float _maxJumpHeight = 2f;
+    readonly float _maxJumpTime = 0.75f;
     int _jumpLockTimer = 0;
     bool _isJumping = false;
-    float _jumpModifier = 1.15f;
+    
     float _gravity = -5.8f;
+    readonly float _defaultGravity = -7f;
 
-    float _currentCameraYRotation;
+    
     int layerMask;
     bool _attached;
     CharacterController _characterController;
@@ -129,26 +125,26 @@ public class PlayerStateMachine : MonoBehaviour
     
     AudioManager audioManager;
 
-    float _rotationFactorPerFrame = 6f;
+    readonly float _rotationFactorPerFrame = 6f;
     int _isJumpingHash;
     bool _requireNewJumpPress;
     bool _requireNewDropPress;
     
-    bool _canGrabLedge = false;
+    
     bool _letGo = false;
     bool _canMove = true;
     GameObject _head;
     Transform _bodyTransform;
     CinemachineBrain _brain;
     ICinemachineCamera _camera;
-    [SerializeField]
+    
     public GameObject _crosshair;
     Vector3 _lastForward;
-    [SerializeField]
+    //[SerializeField]
     public CinemachineVirtualCamera _normalCamera;
-    [SerializeField]
+    //[SerializeField]
     public CinemachineVirtualCamera _crouchCamera;
-    [SerializeField]
+    //[SerializeField]
     public CinemachineVirtualCamera _lookCamera;
 
     [HideInInspector]
@@ -166,7 +162,7 @@ public class PlayerStateMachine : MonoBehaviour
     [HideInInspector]
 
     public CinemachinePOV _lookPov;
-    [SerializeField]
+    //[SerializeField]
     public AudioSource footstep;
 
 
@@ -199,14 +195,14 @@ public class PlayerStateMachine : MonoBehaviour
         _playerInput.CharacterControls.Move.started += OnMovementInput;
         _playerInput.CharacterControls.Move.canceled += OnMovementInput;
         _playerInput.CharacterControls.Move.performed += OnMovementInput;
-        _playerInput.CharacterControls.Run.started += onRun;
-        _playerInput.CharacterControls.Run.canceled += onRun;
-        _playerInput.CharacterControls.Jump.started += onJump;
-        _playerInput.CharacterControls.Jump.canceled += onJump;
-        _playerInput.CharacterControls.Crouch.started += onCrouch;
-        _playerInput.CharacterControls.Drop.started += onDrop;
-        _playerInput.CharacterControls.Look.started += onLook;
-        _playerInput.CharacterControls.Look.canceled += onLook;
+        _playerInput.CharacterControls.Run.started += OnRun;
+        _playerInput.CharacterControls.Run.canceled += OnRun;
+        _playerInput.CharacterControls.Jump.started += OnJump;
+        _playerInput.CharacterControls.Jump.canceled += OnJump;
+        _playerInput.CharacterControls.Crouch.started += OnCrouch;
+        _playerInput.CharacterControls.Drop.started += OnDrop;
+        _playerInput.CharacterControls.Look.started += OnLook;
+        _playerInput.CharacterControls.Look.canceled += OnLook;
         _playerInput.CharacterControls.SceneSwitch.started += OnSceneSwitch;
         //_playerInput.CharacterControls.Look.canceled += onLookRelease;
         //_playerInput.CharacterControls.Drop.canceled += onDrop;
@@ -401,7 +397,7 @@ public class PlayerStateMachine : MonoBehaviour
                     if (horizontalHit.distance < 1f)
                     {
                         Vector3 edgeRotation = horizontalHit.normal;
-                        Vector3 edgePosition = new Vector3(horizontalHit.point.x, CharacterController.transform.position.y - 0.1f, horizontalHit.point.z);
+                        Vector3 edgePosition = new(horizontalHit.point.x, CharacterController.transform.position.y - 0.1f, horizontalHit.point.z);
                         float rotationNeeded = Vector3.SignedAngle(CharacterController.transform.forward, edgeRotation, Vector3.up);
                         Debug.Log(rotationNeeded);
                         LedgeCoordinates = edgePosition;
@@ -429,7 +425,7 @@ public class PlayerStateMachine : MonoBehaviour
         }
         
         // public static bool Raycast(Ray ray, out RaycastHit hitInfo, float maxDistance, int layerMask);
-        Ray surfaceRay = new Ray(_bodyTransform.position + Vector3.up*1f, Vector3.down);
+        Ray surfaceRay = new(_bodyTransform.position + Vector3.up*1f, Vector3.down);
         if (Physics.Raycast(surfaceRay, out var hitMoving, 1.2f, layerMask))
         {   
                 // if(!_attached)
@@ -450,7 +446,7 @@ public class PlayerStateMachine : MonoBehaviour
         if (Physics.Raycast(surfaceRay, out var hitFloor, 1.2f))
         {
             
-            if (hitFloor.collider.tag == "metal")
+            if (hitFloor.collider.CompareTag("metal"))
             {
                _surface = "metal";
 
@@ -468,7 +464,7 @@ public class PlayerStateMachine : MonoBehaviour
 
     }
 
-    void onJump(InputAction.CallbackContext context)
+    void OnJump(InputAction.CallbackContext context)
     {
         if (!_isJumpLocked && !_isUsingTerminal)
         {
@@ -483,11 +479,11 @@ public class PlayerStateMachine : MonoBehaviour
 
 
 
-    void onRun(InputAction.CallbackContext context)
+    void OnRun(InputAction.CallbackContext context)
     {
         _isRunPressed = context.ReadValueAsButton();
     }
-    void onCrouch(InputAction.CallbackContext context)
+    void OnCrouch(InputAction.CallbackContext context)
     {
 
         if (!_isUsingTerminal)
@@ -498,7 +494,7 @@ public class PlayerStateMachine : MonoBehaviour
 
 
     }
-    void onDrop(InputAction.CallbackContext context)
+    void OnDrop(InputAction.CallbackContext context)
     {
         if (!_isHanging && CanDrop())
         {
@@ -514,7 +510,7 @@ public class PlayerStateMachine : MonoBehaviour
         }
     }
 
-    void onLook(InputAction.CallbackContext context)
+    void OnLook(InputAction.CallbackContext context)
     {
         _isLooking = context.ReadValueAsButton();
 
@@ -567,27 +563,7 @@ public class PlayerStateMachine : MonoBehaviour
 
 
     }
-    void onLookRelease(InputAction.CallbackContext context)
-    {
-        // _isLooking = false;
-
-        // Animator.SetBool("isWalkingBack", false);
-        // Animator.SetBool("isStrafing", false);
-        // Animator.SetBool("isStrafingLeft", false);
-        // Animator.SetBool("isStrafingRight", false);
-        // Animator.SetBool("isStrafingLeftDiag", false);
-        // Animator.SetBool("isStrafingRightDiag", false);
-        // if(_inLookState)
-        // {
-        // _inLookState = false;
-        // _crosshair.SetActive(false);
-        // _lookCamera.Priority = 1;
-        // _normalCamera.Priority = 9;
-        // _normalPov.m_HorizontalAxis.Value = _lookPov.m_HorizontalAxis.Value;
-        // _normalTransposer.m_XAxis.Value = _lookTransposer.m_XAxis.Value;
-        // }
-
-    }
+    
     
     private void OnSceneSwitch(InputAction.CallbackContext context)
     {
@@ -603,19 +579,9 @@ public class PlayerStateMachine : MonoBehaviour
     {
         float timeToApex = _maxJumpTime / 2;
         _gravity = (-2 * _maxJumpHeight) / Mathf.Pow(timeToApex, 2);
-        _initialJumpVelocity = (2f * _maxJumpHeight) / timeToApex;
+        _initialJumpVelocity = (2f* _maxJumpHeight) / timeToApex;
+       
     }
-
-    private void OnEnable()
-    {
-        //_playerInput.CharacterControls.Enable();
-    }
-
-    private void OnDisable()
-    {
-        //_playerInput.CharacterControls.Disable();
-    }
-
 
     void HandleRotation()
     {
@@ -652,6 +618,40 @@ public class PlayerStateMachine : MonoBehaviour
 
     }
 
+    public void CheckForLedge()
+    {
+
+        if (AppliedMovementY <= 0)
+        {
+            if (Physics.Raycast(CharacterController.transform.position + CharacterController.transform.forward * 0.5f + CharacterController.transform.up * 2.0f, Vector3.down, out var verticalHit))
+            {
+                if (verticalHit.distance < 0.2f)
+                {
+                    if (Physics.Raycast(new Vector3(CharacterController.transform.position.x, verticalHit.point.y - 0.01f, CharacterController.transform.position.z), CharacterController.transform.forward, out var horizontalHit))
+                    {
+                        if (horizontalHit.distance < 0.5f && horizontalHit.normal.y == 0)
+                        {
+                            Vector3 edgeRotation = horizontalHit.normal;
+                            Vector3 edgePosition = new(horizontalHit.point.x, verticalHit.point.y, horizontalHit.point.z);
+                            float rotationNeeded = Vector3.SignedAngle(edgeRotation, CharacterController.transform.forward * -1f, Vector3.up);
+                            LedgeCoordinates = edgePosition;
+                            IsHanging = true;
+                            _appliedMovement = Vector3.zero;
+                            if (verticalHit.collider.gameObject.layer == 8)
+                            {
+                                Attached = true;
+                                CharacterController.transform.parent = verticalHit.transform.parent;
+                            }
+                            LedgeRotation = rotationNeeded;
+
+                        }
+
+                    }
+                }
+
+            }
+        }
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -668,20 +668,7 @@ public class PlayerStateMachine : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
-    {
-
-        // HandleRotation();
-        // if(CharacterController.enabled == true)
-        // {
-        //     _characterController.Move(_appliedMovement * Time.deltaTime);
-        // }
-        // _currentState.UpdateStates();
-        // DetectSurface();
-
-
-
-    }
+    
     private void FixedUpdate()
     {
         
@@ -701,8 +688,8 @@ public class PlayerStateMachine : MonoBehaviour
 
         //GUI.Box(new Rect(20, 50, 200, 25), CurrentState.ToString());
         //GUI.Box(new Rect(20, 100, 200, 25), CurrentState.CurrentSubState.ToString());
-        GUI.Box(new Rect(20, 150, 200, 25), "surface  :" + _surface);
-        GUI.Box(new Rect(20, 200, 200, 25), "footsteps :" + _footsteps);
+        GUI.Box(new Rect(20, 150, 200, 25), "ledge below  :" + Animator.GetBool("isFalling"));
+        GUI.Box(new Rect(20, 200, 200, 25), "isFalling :" + _isFalling);
         //GUI.Box(new Rect(20, 250, 200, 25), "attached :" + _attached);
         //GUI.Box(new Rect(20, 200, 200, 25), "groundCheck :" + (CurrentState == _states.Grounded()));
         //GUI.Box(new Rect(20, 250, 200, 25), "isStrafing :" + Animator.GetBool("isStrafing"));

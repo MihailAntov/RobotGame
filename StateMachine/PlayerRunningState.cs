@@ -78,19 +78,31 @@ public class PlayerRunningState : PlayerBaseState
         {
             Ctx.JumpLockTimer++;
         }
+        HandleFootsteps();
+    }
+
+    private void HandleFootsteps()
+    {
+        if(Ctx.IsLanding || Ctx.IsRolling)
+        {
+            return;
+        }
+        
         Ctx.DetectSurface();
+        
 
         if (Ctx.Surface != Ctx.Runsteps)
         {
             StopSteps();
-            if(Ctx.Surface != "none")
+            if (Ctx.Surface != "none")
             {
                 Ctx.AudioManager.Play($"{Ctx.Surface}Run");
                 Ctx.Runsteps = Ctx.Surface;
             }
-            
+
         }
     }
+
     public override void InitializeSubState()
     {
 

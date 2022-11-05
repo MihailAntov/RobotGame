@@ -38,7 +38,11 @@ public class PlayerHangingState : PlayerBaseState, IRootState
        
        
     }
-    
+    public bool CheckForLedgeAbove()
+    {
+        return false;
+        //check if there is enough space to climb up. Implement a check for this before climbing up
+    }
     public void HandleGravity()
     {
         Ctx.AppliedMovementY = 0;
@@ -70,7 +74,7 @@ public class PlayerHangingState : PlayerBaseState, IRootState
         {
             Ctx.IsHanging = false;
             Ctx.LetGo = false;
-            Ctx.IsLanding = true;
+            //Ctx.IsLanding = true;
             Ctx.CharacterController.enabled = true;
             
             

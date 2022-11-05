@@ -39,19 +39,13 @@ public class PlayerGroundedState : PlayerBaseState, IRootState
             }
         }
 
-        //set footsteps
-        //------------------------------
-        // if(!Ctx.IsRolling)
-        // {
-        //     Ctx.footstep.volume = 1;
-        // }
-
-        //---------------------------
+     
     
 
     }
     public void HandleGravity()
     {
+        //Ctx.Gravity = Ctx.DefaultGravity;
         Ctx.CurrentMovementY = Ctx.Gravity;
         Ctx.AppliedMovementY = Ctx.Gravity;
     }
@@ -70,7 +64,7 @@ public class PlayerGroundedState : PlayerBaseState, IRootState
                     if (horizontalHit.distance < 1f)
                     {
                         Vector3 edgeRotation = horizontalHit.normal;
-                        Vector3 edgePosition = new Vector3(horizontalHit.point.x, Ctx.CharacterController.transform.position.y - 0.1f, horizontalHit.point.z);
+                        Vector3 edgePosition = new(horizontalHit.point.x, Ctx.CharacterController.transform.position.y - 0.1f, horizontalHit.point.z);
                         float rotationNeeded = Vector3.SignedAngle(Ctx.CharacterController.transform.forward, edgeRotation, Vector3.up);
                         //Debug.Log(rotationNeeded);
                         Ctx.LedgeCoordinates = edgePosition;
@@ -163,7 +157,7 @@ public class PlayerGroundedState : PlayerBaseState, IRootState
         }
         else if (!Ctx.CharacterController.isGrounded && !Ctx.IsJumpPressed && !Ctx.IsHanging && !Ctx.IsRolling)
         {
-            if (_delayCounter < 20)
+            if (_delayCounter < 2)
             {
                 _delayCounter++;
             }

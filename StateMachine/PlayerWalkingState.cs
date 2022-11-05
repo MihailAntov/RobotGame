@@ -86,24 +86,34 @@ public class PlayerWalkingState : PlayerBaseState
     public override void FixedUpdateState()
     {
         CheckSwitchStates();
-        if(Ctx.IsJumpLocked)
+        if (Ctx.IsJumpLocked)
         {
             Ctx.JumpLockTimer++;
         }
+        HandleFootsteps();
+    }
+
+    private void HandleFootsteps()
+    {
         Ctx.DetectSurface();
+        if(Ctx.IsRolling || Ctx.IsLanding)
+        {
+            return;
+        }
 
         if (Ctx.Surface != Ctx.Footsteps)
         {
             StopSteps();
 
-            if(Ctx.Surface!= "none")
+            if (Ctx.Surface != "none")
             {
                 Ctx.AudioManager.Play($"{Ctx.Surface}Step");
                 Ctx.Footsteps = Ctx.Surface;
             }
-            
+
         }
     }
+
     public override void InitializeSubState()
     {
         

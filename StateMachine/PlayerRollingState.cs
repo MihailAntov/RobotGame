@@ -18,6 +18,7 @@ public class PlayerRollingState : PlayerBaseState
         Ctx.footstep.volume = 0;
         Ctx.CharacterController.height = 1f;
         Ctx.CharacterController.radius = 1f;
+        StopSteps();
         Ctx.AudioManager.Play("roll");
         if(!Ctx.IsRunPressed)
           {
@@ -87,5 +88,14 @@ public class PlayerRollingState : PlayerBaseState
     public override void InitializeSubState()
     {
 
+    }
+
+    public void StopSteps()
+    {
+        foreach (string surface in Ctx.Surfaces)
+        {
+            Ctx.AudioManager.Stop($"{surface}Step");
+            Ctx.AudioManager.Stop($"{surface}Run");
+        }
     }
 }

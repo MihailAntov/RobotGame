@@ -26,7 +26,7 @@ public class PlayerJumpingState : PlayerBaseState, IRootState
     {
         HandleGravity();
         CheckSwitchStates();   
-        CheckForLedge();
+        Ctx.CheckForLedge();
     }
     public override void ExitState()
     {
@@ -101,54 +101,41 @@ public class PlayerJumpingState : PlayerBaseState, IRootState
         
     }
 
-    public void CheckForLedge()
-    {
+    //public void CheckForLedge()
+    //{
         
-        if (Ctx.AppliedMovementY <= 0)
-        {
-            //chaing 1.0f to 0.5f in transform.forward and 2.5f to 2.0f in transform.up
-            if (Physics.Raycast(Ctx.CharacterController.transform.position + Ctx.CharacterController.transform.forward * 0.5f + Ctx.CharacterController.transform.up * 2.0f, Vector3.down, out var verticalHit))
-            { 
-                if (verticalHit.distance < 0.2f)
-                {
-                    if (Physics.Raycast(new Vector3(Ctx.CharacterController.transform.position.x, verticalHit.point.y - 0.01f, Ctx.CharacterController.transform.position.z) , Ctx.CharacterController.transform.forward, out var horizontalHit))
-                    //if (Physics.Raycast(new Vector3(Ctx.CharacterController.transform.position.x, verticalHit.point.y - 0.01f, Ctx.CharacterController.transform.position.z) + Ctx.CharacterController.transform.forward * -1f, Ctx.CharacterController.transform.forward, out var horizontalHit))
-                    {
-                        if (horizontalHit.distance < 0.5f && horizontalHit.normal.y == 0) 
-                        {
+    //    if (Ctx.AppliedMovementY <= 0)
+    //    {
+    //        if (Physics.Raycast(Ctx.CharacterController.transform.position + Ctx.CharacterController.transform.forward * 0.5f + Ctx.CharacterController.transform.up * 2.0f, Vector3.down, out var verticalHit))
+    //        { 
+    //            if (verticalHit.distance < 0.2f)
+    //            {
+    //                if (Physics.Raycast(new Vector3(Ctx.CharacterController.transform.position.x, verticalHit.point.y - 0.01f, Ctx.CharacterController.transform.position.z) , Ctx.CharacterController.transform.forward, out var horizontalHit))
+    //                {
+    //                    if (horizontalHit.distance < 0.5f && horizontalHit.normal.y == 0) 
+    //                    {
+    //                        Vector3 edgeRotation = horizontalHit.normal;
+    //                        Vector3 edgePosition = new Vector3(horizontalHit.point.x, verticalHit.point.y, horizontalHit.point.z);
+    //                        float rotationNeeded = Vector3.SignedAngle(edgeRotation, Ctx.CharacterController.transform.forward * -1f, Vector3.up);
+    //                        Ctx.LedgeCoordinates = edgePosition;
+    //                        Ctx.AppliedMovement = Vector3.zero;
                             
-                            Vector3 edgeRotation = horizontalHit.normal;
-                            Vector3 edgePosition = new Vector3(horizontalHit.point.x, verticalHit.point.y, horizontalHit.point.z);
-                            float rotationNeeded = Vector3.SignedAngle(edgeRotation, Ctx.CharacterController.transform.forward * -1f, Vector3.up);
-                            Ctx.LedgeCoordinates = edgePosition;
-                            Ctx.AppliedMovement = Vector3.zero;
-                            
-                            Ctx.IsHanging = true;
-                            //Debug.Log(verticalHit.collider.gameObject.layer);
-                            if(verticalHit.collider.gameObject.layer == 8)
-                            {
-                                // if(!Ctx.Attached)
-                                // {
-                                //     Ctx.PreviousParent = Ctx.CharacterController.transform.parent;
-                                // }
-                                
-                                Ctx.Attached = true;
-                                
-                                //???
+    //                        Ctx.IsHanging = true;
+    //                        if(verticalHit.collider.gameObject.layer == 8)
+    //                        {
+    //                            Ctx.Attached = true;                               
+    //                            Ctx.CharacterController.transform.parent = verticalHit.transform.parent;
+    //                        }
+    //                        Ctx.LedgeRotation = rotationNeeded;
 
-                                //Ctx.PreviousParent = Ctx.CharacterController.transform.parent;
-                                Ctx.CharacterController.transform.parent = verticalHit.transform.parent;
-                            }
-                            Ctx.LedgeRotation = rotationNeeded;
+    //                    }
 
-                        }
+    //                }
+    //            }
 
-                    }
-                }
-
-            }
-        }
-    }
+    //        }
+    //    }
+    //}
 
    
     public void HandleGravity()
